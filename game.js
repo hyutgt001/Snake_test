@@ -12,12 +12,18 @@ const overlayTextEl = document.getElementById("overlay-text");
 const startBtn = document.getElementById("start-btn");
 const pauseBtn = document.getElementById("pause-btn");
 const restartBtn = document.getElementById("restart-btn");
+const difficultySelect = document.getElementById("difficulty-select");
 const touchButtons = document.querySelectorAll(".control-btn");
 
 const GRID_SIZE = 20;
-const BASE_SPEED = 140;
-const MIN_SPEED = 70;
 const STORAGE_KEY = "snake_best_score";
+const DIFFICULTY_KEY = "snake_difficulty";
+
+const DIFFICULTY_PROFILES = {
+  easy: { label: "简单", baseDelay: 170, minDelay: 95, speedStep: 1.5, scoreFactor: 1.2 },
+  normal: { label: "普通", baseDelay: 140, minDelay: 75, speedStep: 2, scoreFactor: 1 },
+  hard: { label: "困难", baseDelay: 112, minDelay: 55, speedStep: 2.5, scoreFactor: 0.75 }
+};
 
 const DIRECTION_MAP = {
   ArrowUp: { x: 0, y: -1, name: "up" },
@@ -45,6 +51,12 @@ let score = 0;
 let bestScore = Number(localStorage.getItem(STORAGE_KEY) || 0);
 let gameState = "idle";
 let loopTimer = null;
+let foodsEaten = 0;
+let difficulty = localStorage.getItem(DIFFICULTY_KEY) || "normal";
+
+if (!DIFFICULTY_PROFILES[difficulty]) {
+  difficulty = "normal";
+}
 
 function resetSnake() {
   const mid = Math.floor(GRID_SIZE / 2);
@@ -97,7 +109,13 @@ function setOverlay(message, visible) {
 }
 
 function getStepDelay() {
-  return Math.max(MIN_SPEED, BASE_SPEED - score * 2);
+  const profile = DIFFICULTY_PROFILES[difficulty];
+  return Math.max(profile.minDelay, profile.baseDelay - foodsEaten * profile.speedStep);
+}
+
+function getScaledScore(baseScore) {
+  const profile = DIFFICULTY_PROFILES[difficulty];
+  return Math.max(1, Math.round(baseScore * profile.scoreFactor));
 }
 
 function isOppositeDirection(next, current) {
@@ -213,7 +231,8 @@ function tick() {
 
   const ateFood = nextHead.x === food.x && nextHead.y === food.y;
   if (ateFood) {
-    score += 10;
+    foodsEaten += 1;
+    score += getScaledScore(10);
     if (score > bestScore) {
       bestScore = score;
       localStorage.setItem(STORAGE_KEY, String(bestScore));
@@ -232,6 +251,7 @@ function startRound() {
   stopLoop();
   gameState = "running";
   score = 0;
+  foodsEaten = 0;
   resetSnake();
   placeFood();
   updateHud();
@@ -259,6 +279,7 @@ function togglePause() {
 
 function init() {
   bestScoreEl.textContent = String(bestScore);
+  difficultySelect.value = difficulty;
   resetSnake();
   placeFood();
   drawGame();
@@ -271,6 +292,15 @@ startBtn.addEventListener("click", () => {
     return;
   }
   startRound();
+});
+
+difficultySelect.addEventListener("change", () => {
+  const nextDifficulty = difficultySelect.value;
+  if (!DIFFICULTY_PROFILES[nextDifficulty]) {
+    return;
+  }
+  difficulty = nextDifficulty;
+  localStorage.setItem(DIFFICULTY_KEY, difficulty);
 });
 
 pauseBtn.addEventListener("click", () => {
