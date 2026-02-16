@@ -15,11 +15,13 @@ const startBtn = document.getElementById("start-btn");
 const pauseBtn = document.getElementById("pause-btn");
 const restartBtn = document.getElementById("restart-btn");
 const difficultySelect = document.getElementById("difficulty-select");
+const themeSelect = document.getElementById("theme-select");
 const touchButtons = document.querySelectorAll(".control-btn");
 
 const GRID_SIZE = 20;
 const STORAGE_KEY = "snake_best_score";
 const DIFFICULTY_KEY = "snake_difficulty";
+const THEME_KEY = "snake_theme";
 const STARTING_LIVES = 3;
 
 const DIFFICULTY_PROFILES = {
@@ -29,10 +31,12 @@ const DIFFICULTY_PROFILES = {
 };
 
 const ITEM_TYPES = [
-  { id: "apple", label: "苹果", points: 10, color: "#d7382f", chance: 55, harmful: false },
-  { id: "banana", label: "香蕉", points: 15, color: "#e0a42d", chance: 30, harmful: false },
-  { id: "bomb", label: "炸弹", points: -20, color: "#3f4654", chance: 15, harmful: true }
+  { id: "apple", label: "苹果", points: 10, colorVar: "--apple-color", chance: 55, harmful: false },
+  { id: "banana", label: "香蕉", points: 15, colorVar: "--banana-color", chance: 30, harmful: false },
+  { id: "bomb", label: "炸弹", points: -20, colorVar: "--bomb-color", chance: 15, harmful: true }
 ];
+
+const THEMES = ["amber", "ocean", "forest"];
 
 const DIRECTION_MAP = {
   ArrowUp: { x: 0, y: -1, name: "up" },
@@ -63,9 +67,14 @@ let loopTimer = null;
 let foodsEaten = 0;
 let difficulty = localStorage.getItem(DIFFICULTY_KEY) || "normal";
 let lives = STARTING_LIVES;
+let theme = localStorage.getItem(THEME_KEY) || "amber";
 
 if (!DIFFICULTY_PROFILES[difficulty]) {
   difficulty = "normal";
+}
+
+if (!THEMES.includes(theme)) {
+  theme = "amber";
 }
 
 function resetSnake() {
@@ -140,6 +149,17 @@ function setOverlay(message, visible) {
   overlayEl.classList.toggle("hidden", !visible);
 }
 
+function applyTheme(nextTheme) {
+  theme = THEMES.includes(nextTheme) ? nextTheme : "amber";
+  document.body.dataset.theme = theme;
+  themeSelect.value = theme;
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function getThemeColor(cssVarName) {
+  return getComputedStyle(document.body).getPropertyValue(cssVarName).trim();
+}
+
 function getStepDelay() {
   const profile = DIFFICULTY_PROFILES[difficulty];
   return Math.max(profile.minDelay, profile.baseDelay - foodsEaten * profile.speedStep);
@@ -172,7 +192,7 @@ function setDirection(nextDirection) {
 
 function drawGrid() {
   const cell = canvas.width / GRID_SIZE;
-  ctx.strokeStyle = "rgba(104, 71, 42, 0.18)";
+  ctx.strokeStyle = getThemeColor("--grid-line");
   ctx.lineWidth = 1;
 
   for (let i = 0; i <= GRID_SIZE; i += 1) {
@@ -210,9 +230,13 @@ function drawCell(x, y, fillStyle, radius = 0.24) {
 }
 
 function drawGame() {
+  const boardFrom = getThemeColor("--board-from");
+  const boardTo = getThemeColor("--board-to");
+  const snakeHeadColor = getThemeColor("--snake-head");
+  const snakeBodyColor = getThemeColor("--snake-body");
   const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  gradient.addColorStop(0, "#fff4de");
-  gradient.addColorStop(1, "#f2d7a7");
+  gradient.addColorStop(0, boardFrom);
+  gradient.addColorStop(1, boardTo);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -220,12 +244,12 @@ function drawGame() {
 
   snake.forEach((segment, index) => {
     const isHead = index === 0;
-    drawCell(segment.x, segment.y, isHead ? "#2d6f3b" : "#3f9b47", isHead ? 0.35 : 0.24);
+    drawCell(segment.x, segment.y, isHead ? snakeHeadColor : snakeBodyColor, isHead ? 0.35 : 0.24);
   });
 
-  drawCell(target.x, target.y, target.type.color, target.type.harmful ? 0.3 : 0.36);
+  drawCell(target.x, target.y, getThemeColor(target.type.colorVar), target.type.harmful ? 0.3 : 0.36);
   if (target.type.harmful) {
-    drawCell(target.x, target.y, "#f2ecdd", 0.15);
+    drawCell(target.x, target.y, getThemeColor("--bomb-core"), 0.15);
   }
 }
 
@@ -352,6 +376,7 @@ function togglePause() {
 function init() {
   bestScoreEl.textContent = String(bestScore);
   difficultySelect.value = difficulty;
+  applyTheme(theme);
   lives = STARTING_LIVES;
   resetSnake();
   placeTarget();
@@ -374,6 +399,11 @@ difficultySelect.addEventListener("change", () => {
   }
   difficulty = nextDifficulty;
   localStorage.setItem(DIFFICULTY_KEY, difficulty);
+});
+
+themeSelect.addEventListener("change", () => {
+  applyTheme(themeSelect.value);
+  drawGame();
 });
 
 pauseBtn.addEventListener("click", () => {
