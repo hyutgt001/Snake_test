@@ -6,6 +6,8 @@ const ctx = canvas.getContext("2d");
 const scoreEl = document.getElementById("score");
 const bestScoreEl = document.getElementById("best-score");
 const stateEl = document.getElementById("game-state");
+const livesEl = document.getElementById("lives");
+const targetTypeEl = document.getElementById("target-type");
 const overlayEl = document.getElementById("overlay");
 const overlayTextEl = document.getElementById("overlay-text");
 
@@ -18,12 +20,19 @@ const touchButtons = document.querySelectorAll(".control-btn");
 const GRID_SIZE = 20;
 const STORAGE_KEY = "snake_best_score";
 const DIFFICULTY_KEY = "snake_difficulty";
+const STARTING_LIVES = 3;
 
 const DIFFICULTY_PROFILES = {
   easy: { label: "简单", baseDelay: 170, minDelay: 95, speedStep: 1.5, scoreFactor: 1.2 },
   normal: { label: "普通", baseDelay: 140, minDelay: 75, speedStep: 2, scoreFactor: 1 },
   hard: { label: "困难", baseDelay: 112, minDelay: 55, speedStep: 2.5, scoreFactor: 0.75 }
 };
+
+const ITEM_TYPES = [
+  { id: "apple", label: "苹果", points: 10, color: "#d7382f", chance: 55, harmful: false },
+  { id: "banana", label: "香蕉", points: 15, color: "#e0a42d", chance: 30, harmful: false },
+  { id: "bomb", label: "炸弹", points: -20, color: "#3f4654", chance: 15, harmful: true }
+];
 
 const DIRECTION_MAP = {
   ArrowUp: { x: 0, y: -1, name: "up" },
@@ -46,13 +55,14 @@ const DIRECT_BY_NAME = {
 let snake = [];
 let direction = DIRECTION_MAP.ArrowRight;
 let pendingDirection = direction;
-let food = { x: 10, y: 10 };
+let target = { x: 10, y: 10, type: ITEM_TYPES[0] };
 let score = 0;
 let bestScore = Number(localStorage.getItem(STORAGE_KEY) || 0);
 let gameState = "idle";
 let loopTimer = null;
 let foodsEaten = 0;
 let difficulty = localStorage.getItem(DIFFICULTY_KEY) || "normal";
+let lives = STARTING_LIVES;
 
 if (!DIFFICULTY_PROFILES[difficulty]) {
   difficulty = "normal";
@@ -69,7 +79,7 @@ function resetSnake() {
   pendingDirection = direction;
 }
 
-function placeFood() {
+function getOpenCells() {
   const openCells = [];
 
   for (let x = 0; x < GRID_SIZE; x += 1) {
@@ -81,17 +91,39 @@ function placeFood() {
     }
   }
 
-  if (openCells.length === 0) {
-    return;
+  return openCells;
+}
+
+function pickItemType() {
+  const totalWeight = ITEM_TYPES.reduce((sum, item) => sum + item.chance, 0);
+  let randomWeight = Math.random() * totalWeight;
+
+  for (const item of ITEM_TYPES) {
+    randomWeight -= item.chance;
+    if (randomWeight <= 0) {
+      return item;
+    }
   }
 
-  const randomIndex = Math.floor(Math.random() * openCells.length);
-  food = openCells[randomIndex];
+  return ITEM_TYPES[0];
+}
+
+function placeTarget() {
+  const openCells = getOpenCells();
+  if (openCells.length === 0) {
+    return false;
+  }
+
+  const randomCell = openCells[Math.floor(Math.random() * openCells.length)];
+  target = { ...randomCell, type: pickItemType() };
+  return true;
 }
 
 function updateHud() {
   scoreEl.textContent = String(score);
   bestScoreEl.textContent = String(bestScore);
+  livesEl.textContent = String(lives);
+  targetTypeEl.textContent = target.type.label;
 
   const labels = {
     idle: "等待开始",
@@ -115,7 +147,11 @@ function getStepDelay() {
 
 function getScaledScore(baseScore) {
   const profile = DIFFICULTY_PROFILES[difficulty];
-  return Math.max(1, Math.round(baseScore * profile.scoreFactor));
+  const scaled = Math.round(baseScore * profile.scoreFactor);
+  if (baseScore >= 0) {
+    return Math.max(1, scaled);
+  }
+  return Math.min(-1, scaled);
 }
 
 function isOppositeDirection(next, current) {
@@ -187,7 +223,10 @@ function drawGame() {
     drawCell(segment.x, segment.y, isHead ? "#2d6f3b" : "#3f9b47", isHead ? 0.35 : 0.24);
   });
 
-  drawCell(food.x, food.y, "#d7382f", 0.36);
+  drawCell(target.x, target.y, target.type.color, target.type.harmful ? 0.3 : 0.36);
+  if (target.type.harmful) {
+    drawCell(target.x, target.y, "#f2ecdd", 0.15);
+  }
 }
 
 function stopLoop() {
@@ -197,11 +236,47 @@ function stopLoop() {
   }
 }
 
-function endGame() {
+function endGame(reason) {
   gameState = "over";
   stopLoop();
   updateHud();
-  setOverlay(`游戏结束，得分 ${score}。点击“重新开始”再来一局。`, true);
+  const message = reason || "撞到障碍，回合结束。";
+  setOverlay(`游戏结束，得分 ${score}。${message} 点击“重新开始”再来一局。`, true);
+}
+
+function refreshBestScore() {
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem(STORAGE_KEY, String(bestScore));
+  }
+}
+
+function handleTargetCollision() {
+  const points = getScaledScore(target.type.points);
+
+  if (target.type.harmful) {
+    lives -= 1;
+    score = Math.max(0, score + points);
+    snake.pop();
+
+    if (lives <= 0) {
+      refreshBestScore();
+      endGame("踩中炸弹，生命耗尽。");
+      return false;
+    }
+  } else {
+    foodsEaten += 1;
+    score += points;
+  }
+
+  refreshBestScore();
+
+  if (!placeTarget()) {
+    endGame("你已经占满了棋盘，成功通关。");
+    return false;
+  }
+
+  return true;
 }
 
 function tick() {
@@ -229,15 +304,11 @@ function tick() {
 
   snake.unshift(nextHead);
 
-  const ateFood = nextHead.x === food.x && nextHead.y === food.y;
-  if (ateFood) {
-    foodsEaten += 1;
-    score += getScaledScore(10);
-    if (score > bestScore) {
-      bestScore = score;
-      localStorage.setItem(STORAGE_KEY, String(bestScore));
+  const ateTarget = nextHead.x === target.x && nextHead.y === target.y;
+  if (ateTarget) {
+    if (!handleTargetCollision()) {
+      return;
     }
-    placeFood();
   } else {
     snake.pop();
   }
@@ -252,8 +323,9 @@ function startRound() {
   gameState = "running";
   score = 0;
   foodsEaten = 0;
+  lives = STARTING_LIVES;
   resetSnake();
-  placeFood();
+  placeTarget();
   updateHud();
   setOverlay("", false);
   drawGame();
@@ -280,8 +352,9 @@ function togglePause() {
 function init() {
   bestScoreEl.textContent = String(bestScore);
   difficultySelect.value = difficulty;
+  lives = STARTING_LIVES;
   resetSnake();
-  placeFood();
+  placeTarget();
   drawGame();
   updateHud();
   setOverlay("点击“开始游戏”开始挑战", true);
