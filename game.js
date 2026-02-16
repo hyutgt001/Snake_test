@@ -16,6 +16,9 @@ const pauseBtn = document.getElementById("pause-btn");
 const restartBtn = document.getElementById("restart-btn");
 const difficultySelect = document.getElementById("difficulty-select");
 const themeSelect = document.getElementById("theme-select");
+const tabGameBtn = document.getElementById("tab-game");
+const tabHelpBtn = document.getElementById("tab-help");
+const helpPanelEl = document.getElementById("help-panel");
 const introModalEl = document.getElementById("intro-modal");
 const introStartBtn = document.getElementById("intro-start-btn");
 const introCloseBtn = document.getElementById("intro-close-btn");
@@ -175,6 +178,17 @@ function setOverlay(message, visible) {
 
 function setIntroVisible(visible) {
   introModalEl.classList.toggle("hidden", !visible);
+}
+
+function setActiveTab(tabName) {
+  const showHelp = tabName === "help";
+  tabGameBtn.classList.toggle("active", !showHelp);
+  tabHelpBtn.classList.toggle("active", showHelp);
+  helpPanelEl.classList.toggle("hidden", !showHelp);
+
+  if (showHelp && gameState === "running") {
+    togglePause();
+  }
 }
 
 function applyTheme(nextTheme) {
@@ -395,6 +409,7 @@ function startRound() {
   updateHud();
   setOverlay("", false);
   setIntroVisible(false);
+  setActiveTab("game");
   drawGame();
   loopTimer = setTimeout(tick, getStepDelay());
 }
@@ -425,6 +440,7 @@ function init() {
   spawnItemWave();
   drawGame();
   updateHud();
+  setActiveTab("game");
   setOverlay("按方向键 / WASD 或点击“开始游戏”开始挑战。", true);
   setIntroVisible(true);
 }
@@ -448,6 +464,14 @@ difficultySelect.addEventListener("change", () => {
 themeSelect.addEventListener("change", () => {
   applyTheme(themeSelect.value);
   drawGame();
+});
+
+tabGameBtn.addEventListener("click", () => {
+  setActiveTab("game");
+});
+
+tabHelpBtn.addEventListener("click", () => {
+  setActiveTab("help");
 });
 
 introStartBtn.addEventListener("click", () => {
@@ -503,6 +527,13 @@ window.addEventListener("keydown", (event) => {
     if (gameState === "running" || gameState === "paused") {
       togglePause();
     }
+    return;
+  }
+
+  if (key === "h") {
+    event.preventDefault();
+    const showingHelp = !helpPanelEl.classList.contains("hidden");
+    setActiveTab(showingHelp ? "game" : "help");
   }
 });
 
