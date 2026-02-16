@@ -1,3 +1,198 @@
 :root {
   color-scheme: only light;
+  --bg-top: #f7f2d8;
+  --bg-mid: #f3d9a7;
+  --bg-bottom: #ddb272;
+  --panel: rgba(255, 250, 234, 0.78);
+  --panel-border: rgba(103, 66, 31, 0.24);
+  --text-primary: #3f2917;
+  --text-secondary: #7b5737;
+  --accent: #eb5737;
+  --accent-deep: #b3391f;
+  --accent-soft: rgba(235, 87, 55, 0.24);
+  --success: #3f9b47;
+  --danger: #b92f2f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Noto Sans SC", sans-serif;
+  color: var(--text-primary);
+  background: radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.55), transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(255, 173, 85, 0.38), transparent 30%),
+    linear-gradient(160deg, var(--bg-top), var(--bg-mid) 46%, var(--bg-bottom));
+  padding: 16px;
+}
+
+.game-shell {
+  width: min(100%, 760px);
+  border-radius: 28px;
+  border: 1px solid var(--panel-border);
+  background: linear-gradient(170deg, rgba(255, 252, 242, 0.94), rgba(255, 240, 207, 0.82));
+  box-shadow: 0 24px 42px rgba(112, 72, 37, 0.18);
+  padding: clamp(14px, 3vw, 24px);
+  backdrop-filter: blur(4px);
+  animation: shell-in 650ms ease-out both;
+}
+
+.game-header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+  letter-spacing: 0.06em;
+}
+
+.game-header p {
+  margin: 10px 0 0;
+  color: var(--text-secondary);
+}
+
+.status-board {
+  margin: 16px 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.status-item {
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  padding: 10px 12px;
+  display: grid;
+  gap: 5px;
+}
+
+.status-item span {
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+
+.status-item strong {
+  font-size: 1.1rem;
+}
+
+.board-wrap {
+  width: min(100%, 480px);
+  margin: 0 auto;
+  position: relative;
+}
+
+#game-board {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  border: 2px solid rgba(80, 47, 21, 0.3);
+  box-shadow: 0 12px 24px rgba(82, 45, 20, 0.2);
+  background: linear-gradient(145deg, #fff4dd, #f7e4c3);
+}
+
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(145deg, rgba(79, 48, 22, 0.68), rgba(140, 79, 40, 0.42));
+  color: #fff7e9;
+  transition: opacity 260ms ease, visibility 260ms ease;
+}
+
+.game-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff9eb;
+  background: linear-gradient(140deg, var(--accent), var(--accent-deep));
+  box-shadow: 0 8px 16px var(--accent-soft);
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+
+button:hover {
+  filter: saturate(1.05) brightness(1.03);
+}
+
+button:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 5px 10px var(--accent-soft);
+}
+
+#pause-btn {
+  background: linear-gradient(140deg, #4a7ac8, #2d4d8d);
+  box-shadow: 0 8px 16px rgba(50, 92, 168, 0.24);
+}
+
+#restart-btn {
+  background: linear-gradient(140deg, #43a361, #317547);
+  box-shadow: 0 8px 16px rgba(63, 155, 71, 0.25);
+}
+
+.touch-controls {
+  margin-top: 18px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+}
+
+.mid-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.control-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  padding: 0;
+  font-size: 1.2rem;
+}
+
+@keyframes shell-in {
+  from {
+    transform: translateY(10px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 680px) {
+  .status-board {
+    grid-template-columns: 1fr;
+  }
+
+  .game-header p {
+    font-size: 0.9rem;
+  }
+
+  button {
+    flex: 1 1 30%;
+    min-width: 110px;
+  }
 }
