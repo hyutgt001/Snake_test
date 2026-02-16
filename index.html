@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>霓虹贪吃蛇</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="game-header">
+      <h1>霓虹贪吃蛇</h1>
+      <p>方向键 / WASD 控制移动，空格暂停或继续。</p>
+    </header>
+
+    <section class="status-board" aria-label="游戏状态">
+      <div class="status-item">
+        <span>当前分数</span>
+        <strong id="score">0</strong>
+      </div>
+      <div class="status-item">
+        <span>最高分</span>
+        <strong id="best-score">0</strong>
+      </div>
+      <div class="status-item">
+        <span>状态</span>
+        <strong id="game-state">等待开始</strong>
+      </div>
+    </section>
+
+    <section class="board-wrap">
+      <canvas id="game-board" width="480" height="480" aria-label="贪吃蛇棋盘"></canvas>
+      <div class="game-overlay" id="overlay">
+        <p id="overlay-text">点击“开始游戏”开始挑战</p>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button id="start-btn" type="button">开始游戏</button>
+      <button id="pause-btn" type="button">暂停</button>
+      <button id="restart-btn" type="button">重新开始</button>
+    </section>
+
+    <section class="touch-controls" aria-label="触控方向键">
+      <button class="control-btn" data-dir="up" type="button">↑</button>
+      <div class="mid-controls">
+        <button class="control-btn" data-dir="left" type="button">←</button>
+        <button class="control-btn" data-dir="down" type="button">↓</button>
+        <button class="control-btn" data-dir="right" type="button">→</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
