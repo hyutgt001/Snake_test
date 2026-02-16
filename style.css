@@ -11,21 +11,21 @@
   --accent: #eb5737;
   --accent-deep: #b3391f;
   --accent-soft: rgba(235, 87, 55, 0.24);
+  --shell-shadow: rgba(112, 72, 37, 0.18);
   --shell-bg-a: rgba(255, 252, 242, 0.94);
   --shell-bg-b: rgba(255, 240, 207, 0.82);
+  --select-bg: rgba(255, 248, 232, 0.92);
+  --select-border: rgba(103, 66, 31, 0.3);
   --canvas-border: rgba(80, 47, 21, 0.3);
   --canvas-shadow: rgba(82, 45, 20, 0.2);
   --board-from: #fff4de;
   --board-to: #f2d7a7;
   --overlay-a: rgba(79, 48, 22, 0.68);
   --overlay-b: rgba(140, 79, 40, 0.42);
+  --intro-backdrop: rgba(44, 26, 12, 0.45);
   --grid-line: rgba(104, 71, 42, 0.18);
   --snake-head: #2d6f3b;
   --snake-body: #3f9b47;
-  --apple-color: #d7382f;
-  --banana-color: #e0a42d;
-  --bomb-color: #3f4654;
-  --bomb-core: #f2ecdd;
 }
 
 body[data-theme="ocean"] {
@@ -40,21 +40,21 @@ body[data-theme="ocean"] {
   --accent: #2f94bf;
   --accent-deep: #196788;
   --accent-soft: rgba(35, 124, 160, 0.24);
+  --shell-shadow: rgba(24, 78, 102, 0.2);
   --shell-bg-a: rgba(241, 252, 255, 0.92);
   --shell-bg-b: rgba(213, 240, 248, 0.84);
+  --select-bg: rgba(230, 247, 255, 0.92);
+  --select-border: rgba(26, 92, 122, 0.35);
   --canvas-border: rgba(31, 87, 114, 0.33);
   --canvas-shadow: rgba(24, 78, 102, 0.2);
   --board-from: #e9fbff;
   --board-to: #9bd2df;
   --overlay-a: rgba(20, 56, 74, 0.68);
   --overlay-b: rgba(38, 118, 145, 0.42);
+  --intro-backdrop: rgba(17, 56, 77, 0.42);
   --grid-line: rgba(35, 96, 120, 0.2);
   --snake-head: #0d647b;
   --snake-body: #1599b8;
-  --apple-color: #ff6845;
-  --banana-color: #ffc84c;
-  --bomb-color: #283949;
-  --bomb-core: #f6f7f8;
 }
 
 body[data-theme="forest"] {
@@ -69,21 +69,21 @@ body[data-theme="forest"] {
   --accent: #4b9d56;
   --accent-deep: #2f6e3b;
   --accent-soft: rgba(60, 138, 72, 0.25);
+  --shell-shadow: rgba(46, 92, 52, 0.22);
   --shell-bg-a: rgba(246, 255, 240, 0.92);
   --shell-bg-b: rgba(222, 244, 220, 0.84);
+  --select-bg: rgba(237, 252, 233, 0.92);
+  --select-border: rgba(58, 114, 64, 0.34);
   --canvas-border: rgba(49, 99, 56, 0.31);
   --canvas-shadow: rgba(46, 92, 52, 0.2);
   --board-from: #effee5;
   --board-to: #bcdfab;
   --overlay-a: rgba(30, 67, 36, 0.66);
   --overlay-b: rgba(56, 114, 63, 0.42);
+  --intro-backdrop: rgba(28, 62, 33, 0.42);
   --grid-line: rgba(64, 113, 71, 0.2);
   --snake-head: #1f7244;
   --snake-body: #3c9d63;
-  --apple-color: #d74c40;
-  --banana-color: #d8b53d;
-  --bomb-color: #313c36;
-  --bomb-core: #f2f6ef;
 }
 
 * {
@@ -108,7 +108,7 @@ body {
   border-radius: 28px;
   border: 1px solid var(--panel-border);
   background: linear-gradient(170deg, var(--shell-bg-a), var(--shell-bg-b));
-  box-shadow: 0 24px 42px rgba(112, 72, 37, 0.18);
+  box-shadow: 0 24px 42px var(--shell-shadow);
   padding: clamp(14px, 3vw, 24px);
   backdrop-filter: blur(4px);
   animation: shell-in 650ms ease-out both;
@@ -141,13 +141,13 @@ body {
 
 select {
   min-width: 136px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--select-border);
   border-radius: 10px;
   padding: 8px 10px;
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--text-primary);
-  background: rgba(255, 248, 232, 0.92);
+  background: var(--select-bg);
 }
 
 .status-board {
@@ -266,6 +266,52 @@ button:active {
   border-radius: 16px;
   padding: 0;
   font-size: 1.2rem;
+}
+
+.intro-modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--intro-backdrop);
+  z-index: 30;
+  transition: opacity 220ms ease, visibility 220ms ease;
+}
+
+.intro-modal.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.intro-card {
+  width: min(100%, 480px);
+  border-radius: 18px;
+  border: 1px solid var(--panel-border);
+  background: linear-gradient(170deg, var(--shell-bg-a), var(--shell-bg-b));
+  box-shadow: 0 18px 36px var(--shell-shadow);
+  padding: 18px;
+}
+
+.intro-card h2 {
+  margin: 0 0 10px;
+}
+
+.intro-card p {
+  margin: 8px 0;
+  color: var(--text-secondary);
+}
+
+.intro-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#intro-close-btn {
+  background: linear-gradient(140deg, #697c95, #44566f);
+  box-shadow: 0 8px 16px rgba(66, 85, 107, 0.25);
 }
 
 @keyframes shell-in {

@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>霓虹贪吃蛇</title>
+  <title>贪吃蛇</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="game-shell">
     <header class="game-header">
-      <h1>霓虹贪吃蛇</h1>
-      <p>方向键 / WASD 控制移动，空格暂停或继续。</p>
+      <h1>贪吃蛇</h1>
+      <p>支持键盘与触控双操作。</p>
     </header>
 
     <section class="game-settings" aria-label="游戏设置">
@@ -51,7 +51,7 @@
       </div>
       <div class="status-item">
         <span>当前道具</span>
-        <strong id="target-type">苹果</strong>
+        <strong id="target-type">🍎</strong>
       </div>
     </section>
 
@@ -77,6 +77,19 @@
       </div>
     </section>
   </main>
+
+  <section class="intro-modal" id="intro-modal" aria-label="游戏说明">
+    <div class="intro-card">
+      <h2>欢迎来到贪吃蛇</h2>
+      <p>键盘方向键或 WASD 都可以移动，空格可暂停/继续。</p>
+      <p>R 键可立即重新开始，P 键可暂停/继续。</p>
+      <p>触屏设备可使用下方方向按钮操作。</p>
+      <div class="intro-actions">
+        <button id="intro-start-btn" type="button">开始游戏</button>
+        <button id="intro-close-btn" type="button">我先看看</button>
+      </div>
+    </div>
+  </section>
 
   <script src="game.js"></script>
 </body>

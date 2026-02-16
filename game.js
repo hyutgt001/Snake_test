@@ -16,6 +16,9 @@ const pauseBtn = document.getElementById("pause-btn");
 const restartBtn = document.getElementById("restart-btn");
 const difficultySelect = document.getElementById("difficulty-select");
 const themeSelect = document.getElementById("theme-select");
+const introModalEl = document.getElementById("intro-modal");
+const introStartBtn = document.getElementById("intro-start-btn");
+const introCloseBtn = document.getElementById("intro-close-btn");
 const touchButtons = document.querySelectorAll(".control-btn");
 
 const GRID_SIZE = 20;
@@ -23,19 +26,22 @@ const STORAGE_KEY = "snake_best_score";
 const DIFFICULTY_KEY = "snake_difficulty";
 const THEME_KEY = "snake_theme";
 const STARTING_LIVES = 3;
+const BOMB_WAVE_CHANCE = 0.42;
 
 const DIFFICULTY_PROFILES = {
-  easy: { label: "简单", baseDelay: 170, minDelay: 95, speedStep: 1.5, scoreFactor: 1.2 },
-  normal: { label: "普通", baseDelay: 140, minDelay: 75, speedStep: 2, scoreFactor: 1 },
-  hard: { label: "困难", baseDelay: 112, minDelay: 55, speedStep: 2.5, scoreFactor: 0.75 }
+  easy: { baseDelay: 170, minDelay: 95, speedStep: 1.5, scoreFactor: 1.2 },
+  normal: { baseDelay: 140, minDelay: 75, speedStep: 2, scoreFactor: 1 },
+  hard: { baseDelay: 112, minDelay: 55, speedStep: 2.5, scoreFactor: 0.75 }
 };
 
-const ITEM_TYPES = [
-  { id: "apple", label: "苹果", points: 10, colorVar: "--apple-color", chance: 55, harmful: false },
-  { id: "banana", label: "香蕉", points: 15, colorVar: "--banana-color", chance: 30, harmful: false },
-  { id: "bomb", label: "炸弹", points: -20, colorVar: "--bomb-color", chance: 15, harmful: true }
-];
+const ITEM_TYPES = {
+  apple: { id: "apple", label: "苹果", points: 10, emoji: "🍎", chance: 65, harmful: false },
+  banana: { id: "banana", label: "香蕉", points: 15, emoji: "🍌", chance: 35, harmful: false },
+  bomb: { id: "bomb", label: "炸弹", points: -20, emoji: "💣", chance: 100, harmful: true }
+};
 
+const SAFE_ITEMS = [ITEM_TYPES.apple, ITEM_TYPES.banana];
+const BOMB_ITEM = ITEM_TYPES.bomb;
 const THEMES = ["amber", "ocean", "forest"];
 
 const DIRECTION_MAP = {
@@ -59,7 +65,7 @@ const DIRECT_BY_NAME = {
 let snake = [];
 let direction = DIRECTION_MAP.ArrowRight;
 let pendingDirection = direction;
-let target = { x: 10, y: 10, type: ITEM_TYPES[0] };
+let activeItems = [];
 let score = 0;
 let bestScore = Number(localStorage.getItem(STORAGE_KEY) || 0);
 let gameState = "idle";
@@ -93,8 +99,8 @@ function getOpenCells() {
 
   for (let x = 0; x < GRID_SIZE; x += 1) {
     for (let y = 0; y < GRID_SIZE; y += 1) {
-      const occupied = snake.some((segment) => segment.x === x && segment.y === y);
-      if (!occupied) {
+      const occupiedBySnake = snake.some((segment) => segment.x === x && segment.y === y);
+      if (!occupiedBySnake) {
         openCells.push({ x, y });
       }
     }
@@ -103,28 +109,46 @@ function getOpenCells() {
   return openCells;
 }
 
-function pickItemType() {
-  const totalWeight = ITEM_TYPES.reduce((sum, item) => sum + item.chance, 0);
+function pickByWeight(items) {
+  const totalWeight = items.reduce((sum, item) => sum + item.chance, 0);
   let randomWeight = Math.random() * totalWeight;
 
-  for (const item of ITEM_TYPES) {
+  for (const item of items) {
     randomWeight -= item.chance;
     if (randomWeight <= 0) {
       return item;
     }
   }
 
-  return ITEM_TYPES[0];
+  return items[0];
 }
 
-function placeTarget() {
+function spawnItemWave() {
   const openCells = getOpenCells();
   if (openCells.length === 0) {
     return false;
   }
 
-  const randomCell = openCells[Math.floor(Math.random() * openCells.length)];
-  target = { ...randomCell, type: pickItemType() };
+  const wave = [];
+  const pullCell = () => {
+    const randomIndex = Math.floor(Math.random() * openCells.length);
+    return openCells.splice(randomIndex, 1)[0];
+  };
+
+  wave.push({
+    ...pullCell(),
+    type: pickByWeight(SAFE_ITEMS)
+  });
+
+  const shouldSpawnBomb = Math.random() < BOMB_WAVE_CHANCE && openCells.length > 0;
+  if (shouldSpawnBomb) {
+    wave.push({
+      ...pullCell(),
+      type: BOMB_ITEM
+    });
+  }
+
+  activeItems = wave;
   return true;
 }
 
@@ -132,7 +156,7 @@ function updateHud() {
   scoreEl.textContent = String(score);
   bestScoreEl.textContent = String(bestScore);
   livesEl.textContent = String(lives);
-  targetTypeEl.textContent = target.type.label;
+  targetTypeEl.textContent = activeItems.map((item) => item.type.emoji).join(" ");
 
   const labels = {
     idle: "等待开始",
@@ -147,6 +171,10 @@ function updateHud() {
 function setOverlay(message, visible) {
   overlayTextEl.textContent = message;
   overlayEl.classList.toggle("hidden", !visible);
+}
+
+function setIntroVisible(visible) {
+  introModalEl.classList.toggle("hidden", !visible);
 }
 
 function applyTheme(nextTheme) {
@@ -229,11 +257,26 @@ function drawCell(x, y, fillStyle, radius = 0.24) {
   ctx.fill();
 }
 
+function drawItem(item) {
+  const cell = canvas.width / GRID_SIZE;
+  const centerX = item.x * cell + cell / 2;
+  const centerY = item.y * cell + cell / 2;
+  const bgColor = item.type.harmful ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.55)";
+
+  drawCell(item.x, item.y, bgColor, 0.28);
+
+  ctx.font = `${Math.floor(cell * 0.7)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(item.type.emoji, centerX, centerY + 1);
+}
+
 function drawGame() {
   const boardFrom = getThemeColor("--board-from");
   const boardTo = getThemeColor("--board-to");
   const snakeHeadColor = getThemeColor("--snake-head");
   const snakeBodyColor = getThemeColor("--snake-body");
+
   const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
   gradient.addColorStop(0, boardFrom);
   gradient.addColorStop(1, boardTo);
@@ -247,10 +290,7 @@ function drawGame() {
     drawCell(segment.x, segment.y, isHead ? snakeHeadColor : snakeBodyColor, isHead ? 0.35 : 0.24);
   });
 
-  drawCell(target.x, target.y, getThemeColor(target.type.colorVar), target.type.harmful ? 0.3 : 0.36);
-  if (target.type.harmful) {
-    drawCell(target.x, target.y, getThemeColor("--bomb-core"), 0.15);
-  }
+  activeItems.forEach((item) => drawItem(item));
 }
 
 function stopLoop() {
@@ -275,13 +315,15 @@ function refreshBestScore() {
   }
 }
 
-function handleTargetCollision() {
-  const points = getScaledScore(target.type.points);
+function handleItemCollision(item) {
+  const points = getScaledScore(item.type.points);
 
-  if (target.type.harmful) {
+  if (item.type.harmful) {
     lives -= 1;
     score = Math.max(0, score + points);
-    snake.pop();
+    if (snake.length > 1) {
+      snake.pop();
+    }
 
     if (lives <= 0) {
       refreshBestScore();
@@ -295,7 +337,7 @@ function handleTargetCollision() {
 
   refreshBestScore();
 
-  if (!placeTarget()) {
+  if (!spawnItemWave()) {
     endGame("你已经占满了棋盘，成功通关。");
     return false;
   }
@@ -328,9 +370,9 @@ function tick() {
 
   snake.unshift(nextHead);
 
-  const ateTarget = nextHead.x === target.x && nextHead.y === target.y;
-  if (ateTarget) {
-    if (!handleTargetCollision()) {
+  const eatenItem = activeItems.find((item) => item.x === nextHead.x && item.y === nextHead.y);
+  if (eatenItem) {
+    if (!handleItemCollision(eatenItem)) {
       return;
     }
   } else {
@@ -349,9 +391,10 @@ function startRound() {
   foodsEaten = 0;
   lives = STARTING_LIVES;
   resetSnake();
-  placeTarget();
+  spawnItemWave();
   updateHud();
   setOverlay("", false);
+  setIntroVisible(false);
   drawGame();
   loopTimer = setTimeout(tick, getStepDelay());
 }
@@ -361,7 +404,7 @@ function togglePause() {
     gameState = "paused";
     stopLoop();
     updateHud();
-    setOverlay("已暂停，按空格或点击“暂停”继续。", true);
+    setOverlay("已暂停，按空格、P 键或点击“暂停”继续。", true);
     return;
   }
 
@@ -379,10 +422,11 @@ function init() {
   applyTheme(theme);
   lives = STARTING_LIVES;
   resetSnake();
-  placeTarget();
+  spawnItemWave();
   drawGame();
   updateHud();
-  setOverlay("点击“开始游戏”开始挑战", true);
+  setOverlay("按方向键 / WASD 或点击“开始游戏”开始挑战。", true);
+  setIntroVisible(true);
 }
 
 startBtn.addEventListener("click", () => {
@@ -406,6 +450,14 @@ themeSelect.addEventListener("change", () => {
   drawGame();
 });
 
+introStartBtn.addEventListener("click", () => {
+  startRound();
+});
+
+introCloseBtn.addEventListener("click", () => {
+  setIntroVisible(false);
+});
+
 pauseBtn.addEventListener("click", () => {
   if (gameState === "idle" || gameState === "over") {
     return;
@@ -423,6 +475,9 @@ window.addEventListener("keydown", (event) => {
 
   if (next) {
     event.preventDefault();
+    if (gameState === "idle" || gameState === "over") {
+      startRound();
+    }
     setDirection(next);
     return;
   }
@@ -434,12 +489,29 @@ window.addEventListener("keydown", (event) => {
     } else {
       togglePause();
     }
+    return;
+  }
+
+  if (key === "r") {
+    event.preventDefault();
+    startRound();
+    return;
+  }
+
+  if (key === "p") {
+    event.preventDefault();
+    if (gameState === "running" || gameState === "paused") {
+      togglePause();
+    }
   }
 });
 
 touchButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const dir = button.dataset.dir;
+    if (gameState === "idle" || gameState === "over") {
+      startRound();
+    }
     setDirection(DIRECT_BY_NAME[dir]);
   });
 });
