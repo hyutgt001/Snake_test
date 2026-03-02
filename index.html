@@ -3,68 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>贪吃蛇</title>
+  <title data-i18n="app.title">贪吃蛇</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="game-shell">
     <header class="game-header">
-      <h1>贪吃蛇</h1>
-      <p>支持键盘与触控双操作。</p>
+      <h1 data-i18n="app.title">贪吃蛇</h1>
+      <p data-i18n="header.subtitle">支持键盘与触控双操作。</p>
     </header>
 
     <section class="game-settings" aria-label="游戏设置">
       <label class="setting-item" for="difficulty-select">
-        <span>难度</span>
+        <span data-i18n="settings.difficulty">难度</span>
         <select id="difficulty-select">
-          <option value="easy">简单</option>
-          <option value="normal" selected>普通</option>
-          <option value="hard">困难</option>
+          <option value="easy" data-i18n="difficulty.easy">简单</option>
+          <option value="normal" selected data-i18n="difficulty.normal">普通</option>
+          <option value="hard" data-i18n="difficulty.hard">困难</option>
         </select>
       </label>
       <label class="setting-item" for="theme-select">
-        <span>主题</span>
+        <span data-i18n="settings.theme">主题</span>
         <select id="theme-select">
-          <option value="amber" selected>琥珀暖阳</option>
-          <option value="ocean">海风霓彩</option>
-          <option value="forest">森林薄荷</option>
+          <option value="amber" selected data-i18n="theme.amber">琥珀暖阳</option>
+          <option value="ocean" data-i18n="theme.ocean">海风霓彩</option>
+          <option value="forest" data-i18n="theme.forest">森林薄荷</option>
+        </select>
+      </label>
+      <label class="setting-item" for="language-select">
+        <span data-i18n="settings.language">语言</span>
+        <select id="language-select">
+          <option value="zh-CN" selected>中文</option>
+          <option value="en-US">English</option>
+          <option value="ja-JP">日本語</option>
         </select>
       </label>
     </section>
 
     <section class="info-tabs" aria-label="选项卡说明">
-      <button class="tab-btn active" id="tab-game" type="button">游戏面板</button>
-      <button class="tab-btn" id="tab-help" type="button">玩法说明</button>
+      <button class="tab-btn active" id="tab-game" type="button" data-i18n="tabs.game">游戏面板</button>
+      <button class="tab-btn" id="tab-help" type="button" data-i18n="tabs.help">玩法说明</button>
     </section>
 
     <section class="help-panel hidden" id="help-panel" aria-label="玩法说明面板">
-      <h3>玩法说明</h3>
-      <p><strong>移动：</strong>方向键 / WASD</p>
-      <p><strong>暂停：</strong>空格 或 P</p>
-      <p><strong>重开：</strong>R 或“重新开始”按钮</p>
-      <p><strong>道具：</strong>🍎 +10，🍌 +15，💣 扣分并减 1 生命</p>
-      <p><strong>规则：</strong>每波至少有一个可得分道具，可能同时出现炸弹，吃掉任意一个后刷新下一波。</p>
+      <h3 data-i18n="help.title">玩法说明</h3>
+      <p><strong data-i18n="help.move.label">移动：</strong> <span data-i18n="help.move.value">方向键 / WASD</span></p>
+      <p><strong data-i18n="help.pause.label">暂停：</strong> <span data-i18n="help.pause.value">空格 或 P</span></p>
+      <p><strong data-i18n="help.restart.label">重开：</strong> <span data-i18n="help.restart.value">R 或“重新开始”按钮</span></p>
+      <p><strong data-i18n="help.items.label">道具：</strong> <span data-i18n="help.items.value">🍎 +10，🍌 +15，💣 扣分并减 1 生命</span></p>
+      <p><strong data-i18n="help.rules.label">规则：</strong> <span data-i18n="help.rules.value">每波至少有一个可得分道具，可能同时出现炸弹，吃掉任意一个后刷新下一波。</span></p>
     </section>
 
     <section class="status-board" aria-label="游戏状态">
       <div class="status-item">
-        <span>当前分数</span>
+        <span data-i18n="status.score">当前分数</span>
         <strong id="score">0</strong>
       </div>
       <div class="status-item">
-        <span>最高分</span>
+        <span data-i18n="status.bestScore">最高分</span>
         <strong id="best-score">0</strong>
       </div>
       <div class="status-item">
-        <span>状态</span>
+        <span data-i18n="status.state">状态</span>
         <strong id="game-state">等待开始</strong>
       </div>
       <div class="status-item">
-        <span>生命值</span>
+        <span data-i18n="status.lives">生命值</span>
         <strong id="lives">3</strong>
       </div>
       <div class="status-item">
-        <span>当前道具</span>
+        <span data-i18n="status.target">当前道具</span>
         <strong id="target-type">🍎</strong>
       </div>
     </section>
@@ -77,9 +85,9 @@
     </section>
 
     <section class="actions">
-      <button id="start-btn" type="button">开始游戏</button>
-      <button id="pause-btn" type="button">暂停</button>
-      <button id="restart-btn" type="button">重新开始</button>
+      <button id="start-btn" type="button" data-i18n="actions.start">开始游戏</button>
+      <button id="pause-btn" type="button" data-i18n="actions.pause">暂停</button>
+      <button id="restart-btn" type="button" data-i18n="actions.restart">重新开始</button>
     </section>
 
     <section class="touch-controls" aria-label="触控方向键">
@@ -94,17 +102,18 @@
 
   <section class="intro-modal" id="intro-modal" aria-label="游戏说明">
     <div class="intro-card">
-      <h2>欢迎来到贪吃蛇</h2>
-      <p>键盘方向键或 WASD 都可以移动，空格可暂停/继续。</p>
-      <p>R 键可立即重新开始，P 键可暂停/继续。</p>
-      <p>触屏设备可使用下方方向按钮操作。</p>
+      <h2 data-i18n="intro.title">欢迎来到贪吃蛇</h2>
+      <p data-i18n="intro.p1">键盘方向键或 WASD 都可以移动，空格可暂停/继续。</p>
+      <p data-i18n="intro.p2">R 键可立即重新开始，P 键可暂停/继续。</p>
+      <p data-i18n="intro.p3">触屏设备可使用下方方向按钮操作。</p>
       <div class="intro-actions">
-        <button id="intro-start-btn" type="button">开始游戏</button>
-        <button id="intro-close-btn" type="button">我先看看</button>
+        <button id="intro-start-btn" type="button" data-i18n="actions.start">开始游戏</button>
+        <button id="intro-close-btn" type="button" data-i18n="intro.close">我先看看</button>
       </div>
     </div>
   </section>
 
+  <script src="i18n.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

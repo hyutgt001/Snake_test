@@ -24,6 +24,14 @@ const introStartBtn = document.getElementById("intro-start-btn");
 const introCloseBtn = document.getElementById("intro-close-btn");
 const touchButtons = document.querySelectorAll(".control-btn");
 
+const SnakeI18n = window.SnakeI18n;
+if (!SnakeI18n) {
+  throw new Error("未找到 SnakeI18n，请确保先引入 i18n.js");
+}
+
+let overlayI18n = { key: null, params: null };
+
+
 const GRID_SIZE = 20;
 const STORAGE_KEY = "snake_best_score";
 const DIFFICULTY_KEY = "snake_difficulty";
@@ -161,19 +169,32 @@ function updateHud() {
   livesEl.textContent = String(lives);
   targetTypeEl.textContent = activeItems.map((item) => item.type.emoji).join(" ");
 
-  const labels = {
-    idle: "等待开始",
-    running: "进行中",
-    paused: "已暂停",
-    over: "已结束"
-  };
-
-  stateEl.textContent = labels[gameState];
+  stateEl.textContent = SnakeI18n.t(`state.${gameState}`);
 }
 
 function setOverlay(message, visible) {
+  overlayI18n = { key: null, params: null };
   overlayTextEl.textContent = message;
   overlayEl.classList.toggle("hidden", !visible);
+}
+
+function setOverlayI18n(key, params, visible) {
+  overlayI18n = { key, params: params ?? null };
+  overlayTextEl.textContent = SnakeI18n.t(key, params);
+  overlayEl.classList.toggle("hidden", !visible);
+}
+
+function refreshOverlayI18n() {
+  if (overlayEl.classList.contains("hidden")) {
+    return;
+  }
+
+  if (!overlayI18n.key) {
+    return;
+  }
+
+  const params = overlayI18n.params === null ? undefined : overlayI18n.params;
+  overlayTextEl.textContent = SnakeI18n.t(overlayI18n.key, params);
 }
 
 function setIntroVisible(visible) {
@@ -314,12 +335,11 @@ function stopLoop() {
   }
 }
 
-function endGame(reason) {
+function endGame(reason = "collision") {
   gameState = "over";
   stopLoop();
   updateHud();
-  const message = reason || "撞到障碍，回合结束。";
-  setOverlay(`游戏结束，得分 ${score}。${message} 点击“重新开始”再来一局。`, true);
+  setOverlayI18n(`overlay.gameOver.${reason}`, { score }, true);
 }
 
 function refreshBestScore() {
@@ -341,7 +361,7 @@ function handleItemCollision(item) {
 
     if (lives <= 0) {
       refreshBestScore();
-      endGame("踩中炸弹，生命耗尽。");
+      endGame("bomb");
       return false;
     }
   } else {
@@ -352,7 +372,7 @@ function handleItemCollision(item) {
   refreshBestScore();
 
   if (!spawnItemWave()) {
-    endGame("你已经占满了棋盘，成功通关。");
+    endGame("win");
     return false;
   }
 
@@ -419,7 +439,7 @@ function togglePause() {
     gameState = "paused";
     stopLoop();
     updateHud();
-    setOverlay("已暂停，按空格、P 键或点击“暂停”继续。", true);
+    setOverlayI18n("overlay.paused", undefined, true);
     return;
   }
 
@@ -441,7 +461,7 @@ function init() {
   drawGame();
   updateHud();
   setActiveTab("game");
-  setOverlay("按方向键 / WASD 或点击“开始游戏”开始挑战。", true);
+  setOverlayI18n("overlay.ready", undefined, true);
   setIntroVisible(true);
 }
 
@@ -545,6 +565,12 @@ touchButtons.forEach((button) => {
     }
     setDirection(DIRECT_BY_NAME[dir]);
   });
+});
+
+
+window.addEventListener("snake-language-change", () => {
+  updateHud();
+  refreshOverlayI18n();
 });
 
 init();
